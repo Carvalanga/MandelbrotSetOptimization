@@ -10,7 +10,7 @@ CFLAGS := -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-eq
 INCLUDE := ../include/
 MAIN 	:= main
 ODIR    := ../objects/
-NAMES   :=
+NAMES   := app mandelbrot
 OBJ     := $(patsubst %, %.o, $(NAMES))
 TARGET  := ../mandelbrot
 
