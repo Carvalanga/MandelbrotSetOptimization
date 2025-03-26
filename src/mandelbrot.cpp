@@ -1,2 +1,3 @@
-#include "mandelbrot.h"
+#include "mandelbrot.hpp"
+
 
