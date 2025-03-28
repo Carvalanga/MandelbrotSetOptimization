@@ -3,12 +3,30 @@
 
 #include "mandelbrot.hpp"
 
-const int screenSizeX = 600;
-const int screenSizeY = 600;
+#define DUP8(text) text, text, text, text, text, text, text, text
+#define SEQ8(num)  num, num + 1, num + 2, num + 3, num + 4, num + 5, num + 6, num + 7
+
+const int screenSizeX = 800;
+const int screenSizeY = 800;
 
 const int   xPosChangeSpeed  = 4;
 const int   yPosChangeSpeed  = 4;
 const float scaleChangeSpeed = 0.001;
+const int   r2 = 10 * 10;
+
+const int nMax = 256;
+
+void printVector(__m256 vector)
+{
+    float buf[8] = {};
+    _mm256_store_ps(buf, vector);
+
+    for(int i = 0; i < 8; i++)
+    {
+        printf("%lg ", buf[i]);
+    }
+    printf("\n");
+}
 
 inline int calcMandelbrot(float x0, float y0)
 {
@@ -46,9 +64,11 @@ int runApp()
     int xOffset = screenSizeX / 2;
     int yOffset = screenSizeY / 2;
 
-    const __m256 X_OFFSET = _mm256_set_ps(xOffset, xOffset, xOffset, xOffset, xOffset, xOffset, xOffset, xOffset);
-    const __m256 Y_OFFSET = _mm256_set_ps(yOffset, yOffset, yOffset, yOffset, yOffset, yOffset, yOffset, yOffset);
-    const __m256 SCALE    = _mm256_set_ps(scale, scale, scale, scale, scale, scale, scale, scale);
+    const __m256 X_OFFSET = _mm256_set_ps(DUP8(xOffset));
+    const __m256 Y_OFFSET = _mm256_set_ps(DUP8(yOffset));
+    const __m256 SCALE    = _mm256_set_ps(DUP8(scale));
+    const __m256 R2       = _mm256_set_ps(DUP8(r2));
+    int   nBuf[8] = {};
 
     while (window.isOpen())
     {
@@ -72,35 +92,52 @@ int runApp()
         window.clear();
 
 
-        for(int curY = 0; curY < screenSizeY - 7; curY += 8)
+        for(int curY = 0; curY < screenSizeY; curY++)
         {
-            __m256 Y0 = _mm256_set_ps(curY, curY + 1, curY + 2, curY + 3, curY + 4, curY + 5, curY + 6, curY + 7);
-            Y0 = _mm256_sub_ps(Y_OFFSET, Y0);
-            Y0 = _mm256_mul_ps(Y0, SCALE);
+            __m256 Y0 = _mm256_set_ps(DUP8(curY));
+            Y0 = ((float)yOffset - Y0) * scale;
 
             for(int curX = 0; curX < screenSizeX - 7; curX += 8)
             {
-                __m256 X0 = _mm256_set_ps(curX, curX + 1, curX + 2, curX + 3, curX + 4, curX + 5, curX + 6, curX + 7);
-                X0 = _mm256_sub_ps(X0, X_OFFSET);
-                X0 = _mm256_mul_ps(X0, SCALE);
+                for(int i = 0; i < 8; i++)
+                        nBuf[i] = 0;
+
+                __m256 X0 = (_mm256_set_ps(SEQ8(curX)) - (float)xOffset) * scale;
 
                 __m256 X = X0;
                 __m256 Y = Y0;
-                for(int n = 0; n < n - 7; n += 8)
-                {
-                    __m256i N = _mm256_set_epi32(n, n + 1, n + 2, n + 3, n + 4, n + 5, n + 6, n + 7);
 
+                for(int n = 0; n < nMax; n++)
+                {
                     __m256 X2 = _mm256_mul_ps(X, X);
                     __m256 Y2 = _mm256_mul_ps(Y, Y);
 
                     __m256 TMP_X = X;
-                    X = _mm256_sub_ps(X2, Y2);
-                    X = _mm256_add_ps(X, X0);
+                    X = _mm256_add_ps(_mm256_sub_ps(X2, Y2), X0);
 
                     Y = _mm256_mul_ps(TMP_X, Y);
-                    Y = _mm256_add_ps(Y, Y);
-                    Y = _mm256_add_ps(Y, Y0);
+                    Y = _mm256_add_ps(_mm256_add_ps(Y, Y), Y0);
+
+                    __m256 CMP = _mm256_cmp_ps(R2, _mm256_add_ps(X2, Y2), _CMP_GT_OS);
+                    int mask = _mm256_movemask_ps(CMP);
+
+                    if(!mask) break;
+
+                    for(int i = 0; i < 8; i++)
+                        nBuf[i] += (mask >> i) & ~(-1 << 1);
                 }
+
+
+                // printf("cur X: %d\n", curX);
+
+                for(int i = 0; i < 8; i++)
+                {
+                    if(nBuf[i] == 256)
+                        buffer[curY * screenSizeY + curX + i].color = sf::Color::Black;
+                    else
+                        buffer[curY * screenSizeY + curX + i].color = sf::Color::White;
+                }
+
             }
         }
 

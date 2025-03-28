@@ -24,7 +24,7 @@ $(ODIR)main.o: main.cpp
 	$(GCC) -c $(addsuffix .cpp, $(MAIN)) -I $(INCLUDE) -o $(patsubst %, $(ODIR)%.o, $(MAIN))
 
 $(ODIR)%.o: %.cpp $(INCLUDE)%.hpp
-	$(GCC) -c -I $(INCLUDE) $< -o $@ -O2 -mavx
+	$(GCC) -O2 -mavx2 -c -I $(INCLUDE) $< -o $@
 
 run:
 	$(TARGET)
