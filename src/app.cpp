@@ -9,8 +9,8 @@
 const int screenSizeX = 800;
 const int screenSizeY = 800;
 
-const int   xPosChangeSpeed  = 4;
-const int   yPosChangeSpeed  = 4;
+const int   xPosChangeSpeed  = 10;
+const int   yPosChangeSpeed  = 10;
 const float scaleChangeSpeed = 0.001;
 const int   r2 = 10 * 10;
 
@@ -28,28 +28,6 @@ void printVector(__m256 vector)
     printf("\n");
 }
 
-inline int calcMandelbrot(float x0, float y0)
-{
-		float xN = x0;
-		float yN = y0;
-		for(int n = 0; n < maxCntToCalc; n++)
-		{
-			float x2 = xN * xN;
-			float y2 = yN * yN;
-
-			float tmpX = xN;
-			xN = x2 - y2 + x0;
-			yN = 2 * tmpX * yN + y0;
-
-			if(x2 + y2 >= r2)
-			{
-				return n;
-			}
-		}
-
-		return -1;
-}
-
 int runApp()
 {
 	sf::RenderWindow window(sf::VideoMode(screenSizeX, screenSizeY), "Mandelbrot");
@@ -64,14 +42,17 @@ int runApp()
     int xOffset = screenSizeX / 2;
     int yOffset = screenSizeY / 2;
 
-    const __m256 X_OFFSET = _mm256_set_ps(DUP8(xOffset));
-    const __m256 Y_OFFSET = _mm256_set_ps(DUP8(yOffset));
-    const __m256 SCALE    = _mm256_set_ps(DUP8(scale));
     const __m256 R2       = _mm256_set_ps(DUP8(r2));
     int   nBuf[8] = {};
 
+    window.setFramerateLimit(60);
+    sf::Clock clock;
+
     while (window.isOpen())
     {
+        float time = clock.restart().asSeconds();
+        printf("fps = %f", 1.0 / time);
+
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
@@ -82,15 +63,21 @@ int runApp()
                     window.close();
                 }
 
-                if(event.key.code == sf::Keyboard::Left)           xOffset+= xPosChangeSpeed;
-                if(event.key.code == sf::Keyboard::Right)          xOffset-= xPosChangeSpeed;
-                if(event.key.code == sf::Keyboard::Up)             yOffset+= yPosChangeSpeed;
-                if(event.key.code == sf::Keyboard::Down)           yOffset-= yPosChangeSpeed;
-                if(event.key.code == sf::Keyboard::Z && scale > 0) scale  -= scaleChangeSpeed;
+                if(event.type == sf::Event::KeyPressed)
+                {
+                    if(event.key.code == sf::Keyboard::Left)           xOffset+= xPosChangeSpeed;
+                    if(event.key.code == sf::Keyboard::Right)          xOffset-= xPosChangeSpeed;
+                    if(event.key.code == sf::Keyboard::Up)             yOffset+= yPosChangeSpeed;
+                    if(event.key.code == sf::Keyboard::Down)           yOffset-= yPosChangeSpeed;
+                    if(event.key.code == sf::Keyboard::Z && scale > 0)
+                    {
+                        scale  -= scaleChangeSpeed;
+                    }
+                    if(event.key.code == sf::Keyboard::X)              scale  += scaleChangeSpeed;
+                }
         }
 
         window.clear();
-
 
         for(int curY = 0; curY < screenSizeY; curY++)
         {
@@ -128,11 +115,9 @@ int runApp()
                 }
 
 
-                // printf("cur X: %d\n", curX);
-
                 for(int i = 0; i < 8; i++)
                 {
-                    if(nBuf[i] == 256)
+                    if(nBuf[7-i] == 256)
                         buffer[curY * screenSizeY + curX + i].color = sf::Color::Black;
                     else
                         buffer[curY * screenSizeY + curX + i].color = sf::Color::White;
@@ -141,22 +126,7 @@ int runApp()
             }
         }
 
-
-        // for(int curY = 0; curY < screenSizeY; curY++)
-        // {
-        //     float y0 = (yOffset - curY) * scale;
-
-        //     for(int curX = 0; curX < screenSizeX; curX++)
-        //     {
-        //         float x0 = (curX - xOffset) * scale;
-        //         int n = calcMandelbrot(x0, y0);
-
-        //         if(n == -1)
-        //             buffer[curY * screenSizeY + curX].color = sf::Color::Black;
-        //         else
-        //             buffer[curY * screenSizeY + curX].color = sf::Color(0, (n + 128) % 256, n % 256);
-        //     }
-        // }
+        printf("scale = %f\n", scale);
 
         window.draw(buffer);
         window.display();
