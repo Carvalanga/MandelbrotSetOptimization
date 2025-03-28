@@ -15,14 +15,15 @@ struct MANDELBROT_SET
 {
 	sf::VertexArray matrix;
 
-	const int matrixSizeX;
-	const int matrixSizeY;
+	int matrixSizeX;
+	int matrixSizeY;
 	float     scale;
 	int       maxCalculationsCnt;
 	int 	  isScalable;
 	int	      isDrawable;
 };
 
+MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, float xOffset, float yOffset);
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY);
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY);
 
