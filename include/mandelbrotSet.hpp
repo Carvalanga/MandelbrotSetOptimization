@@ -3,11 +3,6 @@
 
 #include "SFML/Graphics.hpp"
 
-enum TEST_TYPE
-{
-
-};
-
 enum MANDELBROT_STATUS
 {
 	NOT_DRAWABLE = 0,
@@ -28,12 +23,8 @@ struct MANDELBROT_SET
 	int	         isDrawable;
 };
 
-struct MANDELBOT_TEST
-{
+MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, int nBuf[8]);
 
-};
-
-MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet);
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY);
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY);
 

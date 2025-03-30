@@ -2,7 +2,7 @@
 
 #include "app.hpp"
 #include "mandelbrotSet.hpp"
-
+#include "testMandelbrot.hpp"
 
 const int screenSizeX = 800;
 const int screenSizeY = 800;
@@ -36,17 +36,12 @@ int runApp()
 
     MANDELBROT_SET mdSet = mandelbrotSetCtor(screenSizeX, screenSizeY);
 
-    int centreX = (screenSizeX / 2);
-    int centreY = (screenSizeY / 2);
+    int nBuf[8] = {};
 
-    window.setFramerateLimit(60);
     sf::Clock clock;
 
-    sf::Font font;
-    font.loadFromFile("../data/fonts/Dogurtlen DEMO.ttf");
-
-    sf::Texture button1Texture;
-    button1Texture.loadFromFile("../data/textures/button1.png");
+    MANDELBOT_TEST test = {};
+    test.type = NO_TEST;
 
 
     while (window.isOpen())
@@ -70,15 +65,19 @@ int runApp()
                     if(event.key.code == sf::Keyboard::Down)                 mdSet.centerPosition.y += DY * mdSet.scale * 100;
                     if(event.key.code == sf::Keyboard::Z && mdSet.scale > 0) mdSet.scale  *= DSCALE;
                     if(event.key.code == sf::Keyboard::X)                    mdSet.scale  /= DSCALE;
+                    if(event.key.code == sf::Keyboard::T)                    test.type = START;
                 }
         }
 
         window.clear();
 
         //TODO: fix zoom
-        mdSet = fillMandelbrotSet(mdSet);
+        mdSet    = fillMandelbrotSet(mdSet, nBuf);
 
         window.draw(mdSet.matrix);
+
+        if(test.type != NO_TEST)
+            testMandelbrotSet(&mdSet, &test);
 
         window.display();
     }
