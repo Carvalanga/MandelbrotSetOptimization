@@ -7,9 +7,9 @@
 const int screenSizeX = 800;
 const int screenSizeY = 800;
 
-const float   DX     = 10;
-const float   DY     = 10;
-const float DSCALE   = 0.8;
+const float   DX     = 0.1;
+const float   DY     = 0.1;
+const float DSCALE   = 0.5;
 
 
 const int nMax = 256;
@@ -64,10 +64,10 @@ int runApp()
 
                 if(event.type == sf::Event::KeyPressed)
                 {
-                    if(event.key.code == sf::Keyboard::Left)                 centreX+= DX;
-                    if(event.key.code == sf::Keyboard::Right)                centreX-= DX;
-                    if(event.key.code == sf::Keyboard::Up)                   centreY+= DY;
-                    if(event.key.code == sf::Keyboard::Down)                 centreY-= DY;
+                    if(event.key.code == sf::Keyboard::Left)                 mdSet.centerPosition.x -= DX * mdSet.scale * 100;
+                    if(event.key.code == sf::Keyboard::Right)                mdSet.centerPosition.x += DX * mdSet.scale * 100;
+                    if(event.key.code == sf::Keyboard::Up)                   mdSet.centerPosition.y -= DY * mdSet.scale * 100;
+                    if(event.key.code == sf::Keyboard::Down)                 mdSet.centerPosition.y += DY * mdSet.scale * 100;
                     if(event.key.code == sf::Keyboard::Z && mdSet.scale > 0) mdSet.scale  *= DSCALE;
                     if(event.key.code == sf::Keyboard::X)                    mdSet.scale  /= DSCALE;
                 }
@@ -76,7 +76,7 @@ int runApp()
         window.clear();
 
         //TODO: fix zoom
-        mdSet = fillMandelbrotSet(mdSet, centreX * mdSet.scale, centreY * mdSet.scale);
+        mdSet = fillMandelbrotSet(mdSet);
 
         window.draw(mdSet.matrix);
 

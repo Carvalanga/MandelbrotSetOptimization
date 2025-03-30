@@ -16,14 +16,16 @@ MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
 {
 	sf::VertexArray matrix = setVertexMatrix(matrixSizeX, matrixSizeY);
 
-	MANDELBROT_SET mdSet = {matrix,
-							matrixSizeX,
-							matrixSizeY,
-							DEFAULT_SCALE,
-							DEFAULT_CALCULATIONS_CNT,
-							NOT_SCALABLE,
-							DRAWABLE
-							};
+	MANDELBROT_SET mdSet =
+	{
+		matrix,
+		{(float)matrixSizeX, (float)matrixSizeY},
+		{0, 0},
+		DEFAULT_SCALE,
+		DEFAULT_CALCULATIONS_CNT,
+		NOT_SCALABLE,
+		DRAWABLE
+	};
 
 	return mdSet;
 }
@@ -39,22 +41,23 @@ sf::VertexArray setVertexMatrix(int sizeX, int sizeY)
     return matrix;
 }
 
-MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, float centreX, float centreY)
+MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet)
 {
 	int nBuf[8] = {};
 
-	for(int curY = 0; curY < mdSet.matrixSizeY; curY++)
+	for(int curY = 0; curY < mdSet.matrixSize.y; curY++)
 	{
 		__m256 Y0 = _mm256_set_ps(DUP8(curY));
-		Y0 = (centreY - Y0 * mdSet.scale);
+		Y0 = ((Y0 - mdSet.matrixSize.y / 2) * mdSet.scale + mdSet.centerPosition.y * (1 - mdSet.scale));
 
 		//TODO: add working with size !%8
-		for(int curX = 0; curX < mdSet.matrixSizeX - 7; curX += 8)
+		for(int curX = 0; curX < mdSet.matrixSize.x - 7; curX += 8)
 		{
 			for(int i = 0; i < 8; i++)
 					nBuf[i] = 0;
 
-			__m256 X0 = (_mm256_set_ps(SEQ8(curX)) * mdSet.scale - centreX) ;
+			__m256 X0 = (_mm256_set_ps(SEQ8(curX)));
+			X0 = ((X0 - mdSet.matrixSize.x / 2) * mdSet.scale + mdSet.centerPosition.x * (1 - mdSet.scale));
 
 			__m256 X = X0;
 			__m256 Y = Y0;
@@ -84,9 +87,9 @@ MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, float centreX, float cent
 				int n = nBuf[7-i];
 
 				if(n == 256)
-					mdSet.matrix[curY * mdSet.matrixSizeY + curX + i].color = sf::Color::Black;
+					mdSet.matrix[curY * mdSet.matrixSize.y + curX + i].color = sf::Color::Black;
 				else
-					mdSet.matrix[curY * mdSet.matrixSizeY + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
+					mdSet.matrix[curY * mdSet.matrixSize.y + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
 			}
 
 		}

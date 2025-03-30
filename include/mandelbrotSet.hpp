@@ -5,7 +5,7 @@
 
 enum TEST_TYPE
 {
-	
+
 };
 
 enum MANDELBROT_STATUS
@@ -20,12 +20,12 @@ struct MANDELBROT_SET
 {
 	sf::VertexArray matrix;
 
-	int matrixSizeX;
-	int matrixSizeY;
-	float     scale;
-	int       maxCalculationsCnt;
-	int 	  isScalable;
-	int	      isDrawable;
+	sf::Vector2f matrixSize;
+	sf::Vector2f centerPosition;
+	float        scale;
+	int          maxCalculationsCnt;
+	int 	     isScalable;
+	int	         isDrawable;
 };
 
 struct MANDELBOT_TEST
@@ -33,7 +33,7 @@ struct MANDELBOT_TEST
 
 };
 
-MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, float xOffset, float yOffset);
+MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet);
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY);
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY);
 
