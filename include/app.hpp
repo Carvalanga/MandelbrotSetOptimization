@@ -14,9 +14,9 @@ struct BUTTON
 	sf::Text    text;
 };
 
-BUTTON buttonCtor(sf::Texture& texture, sf::Font& font, const char* buttonText);
-void   setButtonPosition(BUTTON* button, float posX, float posY);
-void   setButtonTextCenter(BUTTON* button);
+// BUTTON buttonCtor(sf::Texture& texture, sf::Font& font, const char* buttonText);
+// void   setButtonPosition(BUTTON* button, float posX, float posY);
+// void   setButtonTextCenter(BUTTON* button);
 
 int runApp();
 

@@ -1,5 +1,6 @@
 #include "app.hpp"
 #include "mandelbrotSet.hpp"
+#include<unistd.h>
 
 int main()
 {

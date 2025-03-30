@@ -81,14 +81,24 @@ MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, float centreX, float cent
 
 			for(int i = 0; i < 8; i++)
 			{
-				if(nBuf[7-i] == 256)
+				int n = nBuf[7-i];
+
+				if(n == 256)
 					mdSet.matrix[curY * mdSet.matrixSizeY + curX + i].color = sf::Color::Black;
 				else
-					mdSet.matrix[curY * mdSet.matrixSizeY + curX + i].color = sf::Color::White;
+					mdSet.matrix[curY * mdSet.matrixSizeY + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
 			}
 
 		}
 	}
 
 	return mdSet;
+}
+
+float testMandelbrotSet(MANDELBROT_SET mdSet, int centreX, int centreY)
+{
+
+
+
+	return 0;
 }
