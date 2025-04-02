@@ -1,26 +1,31 @@
-#include "mandelbrotSet.hpp"
+#include <string.h>
 #include <immintrin.h>
+
+#include "mandelbrotSet.hpp"
 
 #define DUP8(text) text, text, text, text, text, text, text, text
 #define SEQ8(num)  num, num + 1, num + 2, num + 3, num + 4, num + 5, num + 6, num + 7
+
+#define MM __m256
+
+#define PACK_SIZE 2
+#define INTRIN_PACK_LOOP(text) for(int i = 0; i < PACK_SIZE; i++) { text }
+
 
 static const float DEFAULT_SCALE 			= 0.005;
 static const int   DEFAULT_CALCULATIONS_CNT = 256;
 static const __m256 MAX_RADIUS_SQUARE_V = _mm256_set_ps(DUP8(5 * 5));
 
-static void calcN(__m256 X0, __m256 Y0, int maxN, int nBuf[8]);
-
-inline void fillColor(MANDELBROT_SET* mdSet, int nBuf[8], int curX, int curY)
+void printVector(__m256 vector)
 {
-	for(int i = 0; i < 8; i++)
-	{
-		int n = nBuf[7-i];
+    float buf[8] = {};
+    _mm256_store_ps(buf, vector);
 
-		if(n == mdSet->maxCalculationsCnt)
-			mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color::Black;
-		else
-			mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
-	}
+    for(int i = 0; i < 8; i++)
+    {
+        printf("%lg ", buf[i]);
+    }
+    printf("\n");
 }
 
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
@@ -52,52 +57,161 @@ sf::VertexArray setVertexMatrix(int sizeX, int sizeY)
     return matrix;
 }
 
-MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, int nBuf[8])
+void setSeqVector(MANDELBROT_SET* mdSet, __m256 packet[PACK_SIZE], int num)
 {
-	for(int curY = 0; curY < mdSet.matrixSize.y; curY++)
+	for(int i = 0; i < PACK_SIZE; i++)
 	{
-		__m256 Y0 = _mm256_set_ps(DUP8(curY));
-		Y0 = ((Y0 - mdSet.matrixSize.y / 2) * mdSet.scale + mdSet.centerPosition.y * (1 - mdSet.scale));
+		__m256 vector = _mm256_set_ps(SEQ8(num + i * 8));
+		vector = ((vector - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale));
 
-		//TODO: add working with size !%8
-		for(int curX = 0; curX < mdSet.matrixSize.x - 7; curX += 8)
-		{
-			for(int i = 0; i < 8; i++)
-				nBuf[i] = 0;
-
-			__m256 X0 = (_mm256_set_ps(SEQ8(curX)));
-			X0 = ((X0 - mdSet.matrixSize.x / 2) * mdSet.scale + mdSet.centerPosition.x * (1 - mdSet.scale));
-
-			calcN(X0, Y0, mdSet.maxCalculationsCnt, nBuf);
-			fillColor(&mdSet, nBuf, curX, curY);
-		}
+		packet[i] = vector;
 	}
-
-	return mdSet;
 }
 
-static void calcN(__m256 X0, __m256 Y0, int maxN, int nBuf[8])
+void setDupVector(MANDELBROT_SET* mdSet, __m256 packet[PACK_SIZE], int num)
 {
-	__m256 x_V = X0;
-	__m256 y_V = Y0;
+	__m256 vector = _mm256_set_ps(DUP8(num));
+	vector = ((vector - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale));
 
-	for(int n = 0; n < maxN; n++)
+	for(int i = 0; i < PACK_SIZE; i++)
+		packet[i] = vector;
+
+}
+
+void packAdd(__m256 packDest[PACK_SIZE], __m256 packSum1[PACK_SIZE], __m256 packSum2[PACK_SIZE])
+{
+	for(int i = 0; i < PACK_SIZE; i++)
+		packDest[i] = _mm256_add_ps(packSum1[i], packSum2[i]);
+}
+
+void packSub(__m256 packDest[PACK_SIZE], __m256 packSub1[PACK_SIZE], __m256 packSub2[PACK_SIZE])
+{
+	for(int i = 0; i < PACK_SIZE; i++)
+		packDest[i] = _mm256_sub_ps(packSub1[i], packSub2[i]);
+}
+
+void packMul(__m256 packDest[PACK_SIZE], __m256 packMul1[PACK_SIZE], __m256 packMul2[PACK_SIZE])
+{
+	for(int i = 0; i < PACK_SIZE; i++)
+		packDest[i] = _mm256_mul_ps(packMul1[i], packMul2[i]);
+}
+
+void calcCmp(__m256 squareX[PACK_SIZE], __m256 squareY[PACK_SIZE], int masks[PACK_SIZE])
+{
+	packAdd(squareX, squareX, squareY);
+
+	for(int i = 0; i < PACK_SIZE; i++)
 	{
-		__m256 x2_V = _mm256_mul_ps(x_V, x_V);
-		__m256 y2_V = _mm256_mul_ps(y_V, y_V);
+		__m256 cmp = _mm256_cmp_ps(MAX_RADIUS_SQUARE_V, squareX[i], _CMP_GT_OS);
+		masks[i]   = _mm256_movemask_ps(cmp);
+	}
+}
 
-		__m256 TMP_X = x_V;
-		x_V = _mm256_add_ps(_mm256_sub_ps(x2_V, y2_V), X0);
+int sumMasks(int masks[PACK_SIZE])
+{
+	int res = 0;
+	for(int i = 0; i < PACK_SIZE; i++)
+		res = res | masks[i];
 
-		y_V = _mm256_mul_ps(TMP_X, y_V);
-		y_V = _mm256_add_ps(_mm256_add_ps(y_V, y_V), Y0);
+	return res;
+}
 
-		__m256 cmp_V = _mm256_cmp_ps(MAX_RADIUS_SQUARE_V, _mm256_add_ps(x2_V, y2_V), _CMP_GT_OS);
-		int mask = _mm256_movemask_ps(cmp_V);
+void fillMandelbrotSet(MANDELBROT_SET* mdSet)
+{
+	__m256 packX0[PACK_SIZE] = {};
+	__m256 packY0[PACK_SIZE] = {};
 
-		if(!mask) break;
+	__m256 packX[PACK_SIZE]  = {};
+	__m256 packY[PACK_SIZE]  = {};
 
-		for(int i = 0; i < 8; i++)
-			nBuf[i] += (mask >> i) & ~(-1 << 1);
+	__m256 packSquareX[PACK_SIZE] = {};
+	__m256 packSquareY[PACK_SIZE] = {};
+
+	int masks[PACK_SIZE] = {};
+
+	int nBuf[PACK_SIZE * 8]  = {};
+
+	for(int curY = 0; curY < mdSet->matrixSize.y; curY++)
+	{
+		setDupVector(mdSet, packY, curY);
+
+		//---set yPacket
+		__m256 Y0 = _mm256_set_ps(DUP8(curY));
+		Y0 = ((Y0 - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale));
+
+		for(int i = 0; i < PACK_SIZE; i++)
+			packY[i] = Y0;
+		//---
+
+		for(int curX = 0; curX < mdSet->matrixSize.x - PACK_SIZE + 1; curX += PACK_SIZE)
+		{
+
+			for(int i = 0; i < 8 * PACK_SIZE; i++)
+				nBuf[i] = 0;
+
+			for(int i = 0; i < PACK_SIZE; i++)
+				packX0[i] = (_mm256_set_ps(SEQ8(curX + i * 8)) - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale);
+
+			for(int i = 0; i < PACK_SIZE; i++)
+				packX[i] = packX0[i];
+
+			for(int n = 0; n < mdSet->maxCalculationsCnt; n++)
+			{
+				for(int i = 0; i < PACK_SIZE; i++)
+				{
+					packSquareX[i] = _mm256_mul_ps(packX[i], packX[i]);
+					packSquareY[i] = _mm256_mul_ps(packY[i], packY[i]);
+				}
+
+				//calc y-es
+				for(int i = 0; i < PACK_SIZE; i++)
+				{
+					packY[i] = _mm256_mul_ps(packX[i], packY[i]);
+					packY[i] = _mm256_add_ps(packY[i], packY[i]);
+					packY[i] = _mm256_add_ps(packY[i], Y0);
+				}
+
+				for(int i = 0; i < PACK_SIZE; i++)
+				{
+					packX[i] = _mm256_sub_ps(packSquareX[i], packSquareY[i]);
+					packX[i] = _mm256_add_ps(packX[i], packX0[i]);
+				}
+
+				for(int i = 0; i < PACK_SIZE; i++)
+				{
+					__m256 cmp = _mm256_cmp_ps(MAX_RADIUS_SQUARE_V, _mm256_add_ps(packSquareX[i], packSquareY[i]), _CMP_GT_OS);
+					masks[i]   = _mm256_movemask_ps(cmp);
+				}
+
+				if(!sumMasks(masks))
+					break;
+
+				for(int i = 0; i < PACK_SIZE; i++)
+				{
+					nBuf[i] += (masks[i / 8] & 1);
+					masks[i / 8] >>= 1;
+				}
+
+				printf("n:\n");
+				for(int i = 0; i < sizeof(nBuf) / sizeof(nBuf[0]); i++)
+				{
+					printf("%d ", nBuf[i]);
+
+				}
+				printf("\n\n");
+			}
+			// printf("nbuf size = %d\n", sizeof(nBuf));
+
+			for(int i = 0; i < 8 * PACK_SIZE; i++)
+			{
+				int n = nBuf[PACK_SIZE * 8 - i];
+
+				if(n == mdSet->maxCalculationsCnt)
+					mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color::Black;
+				else
+					mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
+			}
+
+		}
 	}
 }

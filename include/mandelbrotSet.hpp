@@ -23,7 +23,7 @@ struct MANDELBROT_SET
 	int	         isDrawable;
 };
 
-MANDELBROT_SET fillMandelbrotSet(MANDELBROT_SET mdSet, int nBuf[8]);
+void fillMandelbrotSet(MANDELBROT_SET* mdSet);
 
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY);
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY);

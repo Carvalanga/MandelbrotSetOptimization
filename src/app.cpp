@@ -72,7 +72,7 @@ int runApp()
         window.clear();
 
         //TODO: fix zoom
-        mdSet    = fillMandelbrotSet(mdSet, nBuf);
+        fillMandelbrotSet(&mdSet);
 
         window.draw(mdSet.matrix);
 
