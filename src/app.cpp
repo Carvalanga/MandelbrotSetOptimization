@@ -14,21 +14,6 @@ const float DSCALE   = 0.5;
 
 const int nMax = 256;
 
-
-// void printVector(__m256 vector)
-// {
-//     float buf[8] = {};
-//     _mm256_store_ps(buf, vector);
-
-//     for(int i = 0; i < 8; i++)
-//     {
-//         printf("%lg ", buf[i]);
-//     }
-//     printf("\n");
-// }
-
-
-
 int runApp()
 {
 	sf::RenderWindow window(sf::VideoMode(screenSizeX, screenSizeY), "Mandelbrot");
@@ -43,6 +28,9 @@ int runApp()
     MANDELBOT_TEST test = {};
     test.type = NO_TEST;
 
+    bool isMove = 0;
+
+    sf::Vector2i mousePos = {};
 
     while (window.isOpen())
     {
@@ -54,8 +42,22 @@ int runApp()
             if (event.type == sf::Event::Closed)
                 window.close();
 
-                if (event.key.code == sf::Keyboard::Escape)
+                if(event.key.code == sf::Keyboard::Escape)
                     window.close();
+
+                // if(event.type == sf::Event::MouseButtonPressed)
+                // {
+                //     if(event.mouseButton.button == sf::Mouse::Left)
+                //     {
+                //         isMove = 1;
+                //         mousePos = sf::Mouse::getPosition();
+                //     }
+                // }
+
+                if(event.type == sf::Event::MouseButtonReleased)
+                    if(event.mouseButton.button == sf::Mouse::Left)
+                        isMove = 0;
+
 
                 if(event.type == sf::Event::KeyPressed)
                 {
@@ -69,9 +71,13 @@ int runApp()
                 }
         }
 
-        window.clear();
+        if(isMove)
+        {
 
-        //TODO: fix zoom
+        }
+
+        window.clear();
+        // printf("isMove = %d\n", isMove);
         fillMandelbrotSet(&mdSet);
 
         window.draw(mdSet.matrix);
@@ -85,33 +91,4 @@ int runApp()
     //TODO: add return value
     return 0;
 }
-
-// BUTTON buttonCtor(sf::Texture& texture, sf::Font& font, const char* buttonText)
-// {
-//     BUTTON button = {};
-//     button.sprite.setTexture(texture);
-//     button.text.setFont(font);
-//     button.text.setString(buttonText);
-//     setButtonTextCenter(&button);
-
-//     // button.sprite.setTextureRect(texture);
-//     return button;
-// }
-
-// void setButtonTextCenter(BUTTON* button)
-// {
-//     sf::Vector2 position = button->sprite.getPosition();
-//     sf::Vector2 size     = button->sprite.getTextureRect().getSize();
-
-//     size /= 2;
-//     button->text.setPosition(position + sf::Vector2f(size));
-// }
-
-// void setButtonPosition(BUTTON* button, float posX, float posY)
-// {
-//     button->sprite.setPosition(sf::Vector2f(posX, posY));
-//     setButtonTextCenter(button);
-// }
-
-
 
