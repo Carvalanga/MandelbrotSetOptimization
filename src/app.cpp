@@ -78,7 +78,8 @@ int runApp()
 
         window.clear();
         // printf("isMove = %d\n", isMove);
-        fillMandelbrotSet(&mdSet);
+        // fillMandelbrotSetIntrinConveer(&mdSet);
+        fillMandelbrotSetIntrin(&mdSet);
 
         window.draw(mdSet.matrix);
 
