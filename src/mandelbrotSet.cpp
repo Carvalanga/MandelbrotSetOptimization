@@ -8,7 +8,7 @@
 
 #define MM __m256
 
-#define PACK_SIZE 2
+#define PACK_SIZE 1
 #define INTRIN_PACK_LOOP(text) for(int i = 0; i < PACK_SIZE; i++) { text }
 
 
@@ -133,24 +133,28 @@ void fillMandelbrotSet(MANDELBROT_SET* mdSet)
 
 	for(int curY = 0; curY < mdSet->matrixSize.y; curY++)
 	{
-		setDupVector(mdSet, packY, curY);
-
-		//---set yPacket
 		__m256 Y0 = _mm256_set_ps(DUP8(curY));
-		Y0 = ((Y0 - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale));
+		Y0 = ((Y0 - mdSet->matrixSize.y / 2) * mdSet->scale + mdSet->centerPosition.y * (1 - mdSet->scale));
 
 		for(int i = 0; i < PACK_SIZE; i++)
 			packY[i] = Y0;
-		//---
 
-		for(int curX = 0; curX < mdSet->matrixSize.x - PACK_SIZE + 1; curX += PACK_SIZE)
+		for(int curX = 0; curX < mdSet->matrixSize.x - PACK_SIZE * 8 + 1; curX += PACK_SIZE * 8)
 		{
-
 			for(int i = 0; i < 8 * PACK_SIZE; i++)
 				nBuf[i] = 0;
 
 			for(int i = 0; i < PACK_SIZE; i++)
 				packX0[i] = (_mm256_set_ps(SEQ8(curX + i * 8)) - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale);
+
+			// printf("\npackX\n");
+			// for(int i = 0; i < PACK_SIZE; i++)
+			// 	printVector(packX0[i]);
+
+			// printf("\npackY\n");
+			// for(int i = 0; i < PACK_SIZE; i++)
+			// 	printVector(packY[i]);
+
 
 			for(int i = 0; i < PACK_SIZE; i++)
 				packX[i] = packX0[i];
@@ -164,12 +168,12 @@ void fillMandelbrotSet(MANDELBROT_SET* mdSet)
 				}
 
 				//calc y-es
-				for(int i = 0; i < PACK_SIZE; i++)
-				{
-					packY[i] = _mm256_mul_ps(packX[i], packY[i]);
-					packY[i] = _mm256_add_ps(packY[i], packY[i]);
-					packY[i] = _mm256_add_ps(packY[i], Y0);
-				}
+				// for(int i = 0; i < PACK_SIZE; i++)
+				// {
+				// 	packY[i] = _mm256_mul_ps(packX[i], packY[i]);
+				// 	packY[i] = _mm256_add_ps(packY[i], packY[i]);
+				// 	packY[i] = _mm256_add_ps(packY[i], Y0);
+				// }
 
 				for(int i = 0; i < PACK_SIZE; i++)
 				{
@@ -187,20 +191,23 @@ void fillMandelbrotSet(MANDELBROT_SET* mdSet)
 					break;
 
 				for(int i = 0; i < PACK_SIZE; i++)
+					if(masks[i] == 0b00011111)
+						printf("%b\n", masks[i]);
+
+				for(int i = 0; i < PACK_SIZE * 8; i++)
 				{
-					nBuf[i] += (masks[i / 8] & 1);
-					masks[i / 8] >>= 1;
+					nBuf[i] += (masks[i / 8] & (1 << (i / 8)));
 				}
 
-				printf("n:\n");
-				for(int i = 0; i < sizeof(nBuf) / sizeof(nBuf[0]); i++)
-				{
-					printf("%d ", nBuf[i]);
 
-				}
-				printf("\n\n");
 			}
-			// printf("nbuf size = %d\n", sizeof(nBuf));
+			// printf("n:\n");
+			// for(int i = 0; i < 8 * PACK_SIZE; i++)
+			// {
+			// 	printf("%d ", nBuf[i]);
+
+			// }
+			// printf("\n\n");
 
 			for(int i = 0; i < 8 * PACK_SIZE; i++)
 			{
