@@ -10,7 +10,7 @@ CFLAGS := -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-eq
 INCLUDE := ../include/
 MAIN 	:= main
 ODIR    := ../objects/
-NAMES   := app mandelbrotSet testMandelbrot commandLineHandler
+NAMES   := app mandelbrotSet testMandelbrot commandLineHandler testOptimization
 OBJ     := $(patsubst %, %.o, $(NAMES))
 TARGET  := ../mandelbrot
 
@@ -28,6 +28,9 @@ $(ODIR)%.o: %.cpp $(INCLUDE)%.hpp
 
 run:
 	$(TARGET)
+
+test:
+	$(TARGET) --test 2000
 
 clean:
 	rm $(ODIR)*.o

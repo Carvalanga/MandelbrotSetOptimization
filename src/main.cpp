@@ -1,6 +1,6 @@
 #include "app.hpp"
 #include "commandLineHandler.hpp"
-
+#include "testOptimization.hpp"
 
 
 int main(int argc, char* argv[])
@@ -16,6 +16,7 @@ int main(int argc, char* argv[])
 			break;
 
 		case PROGRAMM_TEST:
+			testOptimisation(status.testCnt);
 			break;
 	}
 

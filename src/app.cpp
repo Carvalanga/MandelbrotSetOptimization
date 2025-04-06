@@ -2,7 +2,6 @@
 
 #include "app.hpp"
 #include "mandelbrotSet.hpp"
-#include "testMandelbrot.hpp"
 
 const int screenSizeX = 800;
 const int screenSizeY = 800;

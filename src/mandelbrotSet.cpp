@@ -16,8 +16,7 @@
 static const float DEFAULT_SCALE 			= 0.005;
 static const int   DEFAULT_CALCULATIONS_CNT = 256;
 
-__m256 MAX_RADIUS_SQUARE_V = _mm256_set_ps(DUP8(5 * 5));
-
+__m256 MAX_RADIUS_SQUARE_V = _mm256_set_ps(DUP8(12 * 12));
 
 void printVector(__m256 vector)
 {
@@ -208,6 +207,5 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 			}
 		}
 	}
-
 }
 

@@ -1,4 +1,4 @@
-#include "testMandelbrot.hpp"
+#include "fpsTestMandelbrot.hpp"
 
 
 static const float LEFT_TEST_POS  = -1.5;

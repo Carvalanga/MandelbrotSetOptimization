@@ -3,6 +3,9 @@
 
 #include "SFML/Graphics.hpp"
 
+const int DEFAULT_SIZE_X = 800;
+const int DEFAULT_SIZE_Y = 800;
+
 enum MANDELBROT_STATUS
 {
 	NOT_DRAWABLE = 0,
