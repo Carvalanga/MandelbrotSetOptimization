@@ -14,79 +14,55 @@ const float DSCALE   = 0.5;
 
 const int nMax = 256;
 
+void checkInput(PROGRAMM_DATA* data)
+{
+    sf::Event event;
+    while (data->window.pollEvent(event))
+    {
+        if (event.type == sf::Event::Closed || event.key.code == sf::Keyboard::Escape)
+            data->window.close();
+
+        if(event.type == sf::Event::KeyPressed)
+        {
+            if(event.key.code == sf::Keyboard::Left)  data->mdSet.centerPosition.x -= DX * data->mdSet.scale * 100;
+            if(event.key.code == sf::Keyboard::Right) data->mdSet.centerPosition.x += DX * data->mdSet.scale * 100;
+            if(event.key.code == sf::Keyboard::Up)    data->mdSet.centerPosition.y -= DY * data->mdSet.scale * 100;
+            if(event.key.code == sf::Keyboard::Down)  data->mdSet.centerPosition.y += DY * data->mdSet.scale * 100;
+            if(event.key.code == sf::Keyboard::Z)     data->mdSet.scale  *= DSCALE;
+            if(event.key.code == sf::Keyboard::X)     data->mdSet.scale  /= DSCALE;
+        }
+    }
+}
+
+void update(PROGRAMM_DATA* data)
+{
+    float fps = 1.0 / data->fpsClock.restart().asSeconds();
+    printf("fps = %f\n", fps);
+    fillMandelbrotSetIntrinConveer(&data->mdSet);
+}
+
+void render(PROGRAMM_DATA* data)
+{
+    data->window.clear();
+
+    data->window.draw(data->mdSet.matrix);
+
+    data->window.display();
+}
+
 int runApp()
 {
 	sf::RenderWindow window(sf::VideoMode(screenSizeX, screenSizeY), "Mandelbrot");
-    sf::Event event;
-
-    MANDELBROT_SET mdSet = mandelbrotSetCtor(screenSizeX, screenSizeY);
-
-    int nBuf[8] = {};
-
+    MANDELBROT_SET   mdSet = mandelbrotSetCtor(screenSizeX, screenSizeY);
     sf::Clock clock;
 
-    MANDELBOT_TEST test = {};
-    test.type = NO_TEST;
-
-    bool isMove = 0;
-
-    sf::Vector2i mousePos = {};
+    PROGRAMM_DATA data = {window, clock, mdSet};
 
     while (window.isOpen())
     {
-        float fps = 1.0 / clock.restart().asSeconds();
-        printf("fps = %f\n", fps);
-
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-
-                if(event.key.code == sf::Keyboard::Escape)
-                    window.close();
-
-                // if(event.type == sf::Event::MouseButtonPressed)
-                // {
-                //     if(event.mouseButton.button == sf::Mouse::Left)
-                //     {
-                //         isMove = 1;
-                //         mousePos = sf::Mouse::getPosition();
-                //     }
-                // }
-
-                if(event.type == sf::Event::MouseButtonReleased)
-                    if(event.mouseButton.button == sf::Mouse::Left)
-                        isMove = 0;
-
-
-                if(event.type == sf::Event::KeyPressed)
-                {
-                    if(event.key.code == sf::Keyboard::Left)                 mdSet.centerPosition.x -= DX * mdSet.scale * 100;
-                    if(event.key.code == sf::Keyboard::Right)                mdSet.centerPosition.x += DX * mdSet.scale * 100;
-                    if(event.key.code == sf::Keyboard::Up)                   mdSet.centerPosition.y -= DY * mdSet.scale * 100;
-                    if(event.key.code == sf::Keyboard::Down)                 mdSet.centerPosition.y += DY * mdSet.scale * 100;
-                    if(event.key.code == sf::Keyboard::Z && mdSet.scale > 0) mdSet.scale  *= DSCALE;
-                    if(event.key.code == sf::Keyboard::X)                    mdSet.scale  /= DSCALE;
-                    if(event.key.code == sf::Keyboard::T)                    test.type = START;
-                }
-        }
-
-        if(isMove)
-        {
-
-        }
-
-        window.clear();
-        // printf("isMove = %d\n", isMove);
-        // fillMandelbrotSetIntrinConveer(&mdSet);
-        fillMandelbrotSetIntrin(&mdSet);
-
-        window.draw(mdSet.matrix);
-
-        if(test.type != NO_TEST)
-            testMandelbrotSet(&mdSet, &test);
-
-        window.display();
+        checkInput(&data);
+        update(&data);
+        render(&data);
     }
 
     //TODO: add return value

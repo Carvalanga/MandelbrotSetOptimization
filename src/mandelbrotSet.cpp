@@ -131,7 +131,6 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 				if(!sumMasks(masks))
 					break;
 
-				//TODO: optimize
 				INTRIN_PACK_LOOP
 				(
 					int mask = masks[PACK_SIZE - 1 - i];
@@ -141,7 +140,6 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 						mask >>= 1;
 					}
 				)
-
 			}
 
 			for(int i = 0; i < AVX_VECTOR_SIZE * PACK_SIZE; i++)

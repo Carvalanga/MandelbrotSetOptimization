@@ -1,9 +1,23 @@
 #include "app.hpp"
-#include "mandelbrotSet.hpp"
-#include<unistd.h>
+#include "commandLineHandler.hpp"
 
-int main()
+
+
+int main(int argc, char* argv[])
 {
-	printf("%lu\n", sizeof(MANDELBROT_SET));
-	runApp();
+	PROGRAMM_STATUS status = handleCommandArgs(argc, argv);
+	if(errorHandler(status.mode))
+		return 1;
+
+	switch (status.mode)
+	{
+		case PROGRAMM_GRAPHICS:
+			runApp();
+			break;
+
+		case PROGRAMM_TEST:
+			break;
+	}
+
+	return 0;
 }
