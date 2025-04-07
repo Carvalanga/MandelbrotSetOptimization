@@ -62,7 +62,9 @@ static TEST_RESULT testFunc(mdFillFunc func, FILE* dumpFile, int loopCnt)
 
 void testOptimisation(int loopCnt)
 {
-	FILE* testNoOpt = fopen("noOpt.txt", "w");
+	FILE* testNoOpt  = fopen("noOpt.txt",     "w");
+	FILE* intrinOpt  = fopen("intrinOpt.txt", "w");
+	FILE* conveerOpt = fopen("conveerOpt.txt","w");
 
 	TEST_RESULT res1 = testFunc(fillMandelbrotSetIntrin,        testNoOpt, loopCnt);
 	printf("middle time = (%lg +- %lg) millseconds (%lg%%)\n", res1.middleTimeForFilling, res1.error, res1.error / res1.middleTimeForFilling * 100);
@@ -71,6 +73,8 @@ void testOptimisation(int loopCnt)
 	// printf("middle time = (%lg +- %lg) millseconds (%lg%%)\n", res2.middleTimeForFilling, res2.error, res2.error / res2.middleTimeForFilling * 100);
 
 	fclose(testNoOpt);
+	fclose(intrinOpt);
+	fclose(conveerOpt);
 }
 
 #undef GET_SECONDS
