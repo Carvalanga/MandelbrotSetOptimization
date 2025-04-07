@@ -3,6 +3,7 @@
 
 #include "SFML/Graphics.hpp"
 
+
 const int DEFAULT_SIZE_X = 800;
 const int DEFAULT_SIZE_Y = 800;
 
@@ -20,14 +21,19 @@ struct MANDELBROT_SET
 
 	sf::Vector2f matrixSize;
 	sf::Vector2f centerPosition;
+	void (*fillFunc)(MANDELBROT_SET* mdSet);
+
 	float        scale;
 	int          maxCalculationsCnt;
 	int 	     isScalable;
 	int	         isDrawable;
 };
 
+typedef void (*mdFillFunc)(MANDELBROT_SET* mdSet);
+
 void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet);
 void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet);
+void fillMandelbrotSetNoOpt(MANDELBROT_SET* mdSet);
 
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY);
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY);

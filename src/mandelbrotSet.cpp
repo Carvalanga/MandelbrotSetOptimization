@@ -15,8 +15,9 @@
 
 static const float DEFAULT_SCALE 			= 0.005;
 static const int   DEFAULT_CALCULATIONS_CNT = 256;
+static const int   MAX_RADIUS 				= 5 * 5;
 
-__m256 MAX_RADIUS_SQUARE_V = _mm256_set_ps(DUP8(12 * 12));
+static const __m256 MAX_RADIUS_SQUARE_VECTOR = _mm256_set_ps(DUP8(MAX_RADIUS));
 
 void printVector(__m256 vector)
 {
@@ -39,6 +40,7 @@ MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
 		matrix,
 		{(float)matrixSizeX, (float)matrixSizeY},
 		{0, 0},
+		fillMandelbrotSetIntrinConveer,
 		DEFAULT_SCALE,
 		DEFAULT_CALCULATIONS_CNT,
 		NOT_SCALABLE,
@@ -123,7 +125,7 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 
 				INTRIN_PACK_LOOP
 				(
-					__m256 cmp = _mm256_cmp_ps(MAX_RADIUS_SQUARE_V, _mm256_add_ps(packSquareX[i], packSquareY[i]), _CMP_GT_OS);
+					__m256 cmp = _mm256_cmp_ps(MAX_RADIUS_SQUARE_VECTOR, _mm256_add_ps(packSquareX[i], packSquareY[i]), _CMP_GT_OS);
 					masks[i]   = _mm256_movemask_ps(cmp);
 				)
 
@@ -187,7 +189,7 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 				y_V = _mm256_mul_ps(TMP_X, y_V);
 				y_V = _mm256_add_ps(_mm256_add_ps(y_V, y_V), Y0);
 
-				__m256 cmp_V = _mm256_cmp_ps(MAX_RADIUS_SQUARE_V, _mm256_add_ps(x2_V, y2_V), _CMP_GT_OS);
+				__m256 cmp_V = _mm256_cmp_ps(MAX_RADIUS_SQUARE_VECTOR, _mm256_add_ps(x2_V, y2_V), _CMP_GT_OS);
 				int mask = _mm256_movemask_ps(cmp_V);
 
 				if(!mask) break;
@@ -207,5 +209,41 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 			}
 		}
 	}
+}
+
+void fillMandelbrotSetNoOpt(MANDELBROT_SET* mdSet)
+{
+	for(int curY = 0; curY < mdSet->matrixSize.y; curY++)
+	{
+		float y0 = (curY - mdSet->matrixSize.y / 2) * mdSet->scale + mdSet->centerPosition.y * (1 - mdSet->scale);
+
+		for(int curX = 0; curX < mdSet->matrixSize.x; curX++)
+		{
+			float x0 = (curX - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale);
+
+			float xN = x0;
+			float yN = y0;
+
+			int n = 0;
+			for(; n < mdSet->maxCalculationsCnt; n++)
+			{
+				float x2 = xN * xN;
+				float y2 = yN * yN;
+
+				float tmpX = xN;
+				xN = x2 - y2 + x0;
+				yN = 2 * tmpX * yN + y0;
+
+				if(x2 + y2 >= MAX_RADIUS)
+					break;
+			}
+
+			if(n == mdSet->maxCalculationsCnt)
+				mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = sf::Color::Black;
+			else
+				mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = sf::Color((n+64)^2%255, n, n^3 % 255);
+		}
+	}
+
 }
 

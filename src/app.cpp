@@ -8,10 +8,17 @@ const int screenSizeY = 800;
 
 const float   DX     = 0.1;
 const float   DY     = 0.1;
-const float DSCALE   = 0.5;
-
+const float   DSCALE   = 0.5;
 
 const int nMax = 256;
+
+static int   funcSwitchNumber = 0;
+static const mdFillFunc FUNTIONS[] =
+{
+	fillMandelbrotSetNoOpt,
+	fillMandelbrotSetIntrin,
+	fillMandelbrotSetIntrinConveer
+};
 
 void checkInput(PROGRAMM_DATA* data)
 {
@@ -29,6 +36,7 @@ void checkInput(PROGRAMM_DATA* data)
             if(event.key.code == sf::Keyboard::Down)  data->mdSet.centerPosition.y += DY * data->mdSet.scale * 100;
             if(event.key.code == sf::Keyboard::Z)     data->mdSet.scale  *= DSCALE;
             if(event.key.code == sf::Keyboard::X)     data->mdSet.scale  /= DSCALE;
+            if(event.key.code == sf::Keyboard::Enter) data->mdSet.fillFunc = FUNTIONS[(funcSwitchNumber++) % (sizeof(FUNTIONS) / sizeof(FUNTIONS[0]))];
         }
     }
 }
@@ -36,8 +44,8 @@ void checkInput(PROGRAMM_DATA* data)
 void update(PROGRAMM_DATA* data)
 {
     float fps = 1.0 / data->fpsClock.restart().asSeconds();
-    printf("fps = %f\n", fps);
-    fillMandelbrotSetIntrinConveer(&data->mdSet);
+    printf("fps = %lg\n", fps);
+    data->mdSet.fillFunc(&data->mdSet);
 }
 
 void render(PROGRAMM_DATA* data)
