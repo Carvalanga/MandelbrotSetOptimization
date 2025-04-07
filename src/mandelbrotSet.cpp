@@ -64,6 +64,7 @@ MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
 
 void mandelbrotSetDtor(MANDELBROT_SET* mdSet)
 {
+	//TODO: dodelat
 	free(mdSet->colorTable);
 }
 

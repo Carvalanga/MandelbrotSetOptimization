@@ -30,7 +30,7 @@ run:
 	$(TARGET)
 
 test:
-	$(TARGET) --test 100
+	$(TARGET) --test 3
 
 clean:
 	rm $(ODIR)*.o
