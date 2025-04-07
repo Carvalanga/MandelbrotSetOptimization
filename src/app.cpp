@@ -72,6 +72,8 @@ int runApp()
         render(&data);
     }
 
+    mandelbrotSetDtor(&mdSet);
+
     //TODO: add return value
     return 0;
 }

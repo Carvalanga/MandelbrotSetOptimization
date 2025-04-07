@@ -22,6 +22,7 @@ struct MANDELBROT_SET
 	sf::Vector2f matrixSize;
 	sf::Vector2f centerPosition;
 	void (*fillFunc)(MANDELBROT_SET* mdSet);
+	sf::Color*   colorTable;
 
 	float        scale;
 	int          maxCalculationsCnt;
@@ -36,6 +37,7 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet);
 void fillMandelbrotSetNoOpt(MANDELBROT_SET* mdSet);
 
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY);
+void mandelbrotSetDtor(MANDELBROT_SET* mdSet);
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY);
 
 #endif

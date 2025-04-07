@@ -1,5 +1,6 @@
 #include <string.h>
 #include <immintrin.h>
+#include <math.h>
 
 #include "mandelbrotSet.hpp"
 
@@ -31,9 +32,19 @@ void printVector(__m256 vector)
     printf("\n");
 }
 
+void fillColorTable(sf::Color* colorTable, int nCnt)
+{
+	for(int n = 0; n < nCnt - 1; n++)
+		colorTable[n] = sf::Color(n, pow(n, 2), pow(n, 3));
+
+	colorTable[nCnt - 1] = sf::Color::Black;
+}
+
 MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
 {
 	sf::VertexArray matrix = setVertexMatrix(matrixSizeX, matrixSizeY);
+	sf::Color* colorTable = (sf::Color*)calloc(DEFAULT_CALCULATIONS_CNT, sizeof(sf::Color));
+	fillColorTable(colorTable, DEFAULT_CALCULATIONS_CNT);
 
 	MANDELBROT_SET mdSet =
 	{
@@ -41,6 +52,7 @@ MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
 		{(float)matrixSizeX, (float)matrixSizeY},
 		{0, 0},
 		fillMandelbrotSetIntrinConveer,
+		colorTable,
 		DEFAULT_SCALE,
 		DEFAULT_CALCULATIONS_CNT,
 		NOT_SCALABLE,
@@ -48,6 +60,11 @@ MANDELBROT_SET mandelbrotSetCtor(int matrixSizeX, int matrixSizeY)
 	};
 
 	return mdSet;
+}
+
+void mandelbrotSetDtor(MANDELBROT_SET* mdSet)
+{
+	free(mdSet->colorTable);
 }
 
 sf::VertexArray setVertexMatrix(int sizeX, int sizeY)
@@ -146,13 +163,8 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 			for(int i = 0; i < AVX_VECTOR_SIZE * PACK_SIZE; i++)
 			{
 				int n = nBuf[PACK_SIZE * AVX_VECTOR_SIZE - 1 - i];
-
-				if(n == mdSet->maxCalculationsCnt)
-					mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color::Black;
-				else
-					mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
+				mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = mdSet->colorTable[n];
 			}
-
 		}
 	}
 }
@@ -202,10 +214,7 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 			{
 				int n = nBuf[7-i];
 
-				if(n == mdSet->maxCalculationsCnt)
-					mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color::Black;
-				else
-					mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = sf::Color((n+64)^2%255, n, n^3 % 255);
+				mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = mdSet->colorTable[n];
 			}
 		}
 	}
@@ -238,12 +247,7 @@ void fillMandelbrotSetNoOpt(MANDELBROT_SET* mdSet)
 					break;
 			}
 
-			if(n == mdSet->maxCalculationsCnt)
-				mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = sf::Color::Black;
-			else
-				mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = sf::Color((n+64)^2%255, n, n^3 % 255);
+			mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = mdSet->colorTable[n];
 		}
 	}
-
 }
-
