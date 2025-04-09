@@ -12,6 +12,8 @@ const float   DSCALE   = 0.5;
 
 const int nMax = 256;
 
+static int isMove = 0;
+
 static int   funcSwitchNumber = 0;
 static const mdFillFunc FUNTIONS[] =
 {
@@ -38,6 +40,24 @@ void checkInput(PROGRAMM_DATA* data)
             if(event.key.code == sf::Keyboard::X)     data->mdSet.scale  /= DSCALE;
             if(event.key.code == sf::Keyboard::Enter) data->mdSet.fillFunc = FUNTIONS[(funcSwitchNumber++) % (sizeof(FUNTIONS) / sizeof(FUNTIONS[0]))];
         }
+
+        if(event.type == sf::Event::MouseWheelScrolled)
+        {
+            if(event.mouseWheelScroll.delta ==  1)  data->mdSet.scale *= DSCALE;
+            if(event.mouseWheelScroll.delta == -1) data->mdSet.scale /= DSCALE;
+        }
+
+        if(event.type == sf::Event::MouseButtonPressed)
+        {
+            if(event.mouseButton.button == sf::Mouse::Left)
+                isMove = 1;
+        }
+
+        if(event.type == sf::Event::MouseButtonReleased)
+        {
+            if(event.mouseButton.button == sf::Mouse::Left)
+                isMove = 0;
+        }
     }
 }
 
@@ -45,6 +65,7 @@ void update(PROGRAMM_DATA* data)
 {
     float fps = 1.0 / data->fpsClock.restart().asSeconds();
     printf("fps = %lg\n", fps);
+
     data->mdSet.fillFunc(&data->mdSet);
 }
 

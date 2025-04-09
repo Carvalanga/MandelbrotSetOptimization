@@ -21,5 +21,9 @@ int main(int argc, char* argv[])
 			break;
 	}
 
+#ifdef OBEME
+	printf("OBEME!\n");
+#endif
+
 	return 0;
 }
