@@ -4,21 +4,14 @@
 
 #include "mandelbrotSet.hpp"
 
-#define DUP8(text) text, text, text, text, text, text, text, text
-#define SEQ8(num)  num, num + 1, num + 2, num + 3, num + 4, num + 5, num + 6, num + 7
-
-#define MM __m256
-
 #define PACK_SIZE 2
-#define AVX_VECTOR_SIZE 8
 #define INTRIN_PACK_LOOP(text) for(int i = 0; i < PACK_SIZE; i++) { text }
-
 
 static const float DEFAULT_SCALE 			= 0.005;
 static const int   DEFAULT_CALCULATIONS_CNT = 256;
 static const int   MAX_RADIUS 				= 5 * 5;
 
-static const __m256 MAX_RADIUS_SQUARE_VECTOR = _mm256_set_ps(DUP8(MAX_RADIUS));
+static const MM MAX_RADIUS_SQUARE_VECTOR = SET_VECTOR_DUP(MAX_RADIUS);
 
 void printVector(__m256 vector)
 {
@@ -90,13 +83,13 @@ int sumMasks(int masks[PACK_SIZE])
 
 void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 {
-	__m256 packX0[PACK_SIZE] = {};
+	MM packX0[PACK_SIZE] = {};
 
-	__m256 packX[PACK_SIZE]  = {};
-	__m256 packY[PACK_SIZE]  = {};
+	MM packX[PACK_SIZE]  = {};
+	MM packY[PACK_SIZE]  = {};
 
-	__m256 packSquareX[PACK_SIZE] = {};
-	__m256 packSquareY[PACK_SIZE] = {};
+	MM packSquareX[PACK_SIZE] = {};
+	MM packSquareY[PACK_SIZE] = {};
 
 	int masks[PACK_SIZE] = {};
 
@@ -104,17 +97,17 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 
 	for(int curY = 0; curY < mdSet->matrixSize.y; curY++)
 	{
-		__m256 Y0 = _mm256_set_ps(DUP8(curY));
+		MM Y0 = SET_VECTOR_DUP(curY);
 		Y0 = ((Y0 - mdSet->matrixSize.y / 2) * mdSet->scale + mdSet->centerPosition.y * (1 - mdSet->scale));
 
 		INTRIN_PACK_LOOP(packY[i] = Y0;)
 
-		for(int curX = 0; curX < mdSet->matrixSize.x - (PACK_SIZE * 8 - 1); curX += PACK_SIZE * AVX_VECTOR_SIZE)
+		for(int curX = 0; curX < mdSet->matrixSize.x - (PACK_SIZE * AVX_VECTOR_SIZE - 1); curX += PACK_SIZE * AVX_VECTOR_SIZE)
 		{
 			for(int i = 0; i < AVX_VECTOR_SIZE * PACK_SIZE; i++)
 				nBuf[i] = 0;
 
-			INTRIN_PACK_LOOP(packX0[i] = (_mm256_set_ps(SEQ8(curX + i * 8)) - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale);)
+			INTRIN_PACK_LOOP(packX0[i] = (SET_VECTOR_SEQ(curX + i * AVX_VECTOR_SIZE) - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale);)
 
 			INTRIN_PACK_LOOP(packX[i] = packX0[i];)
 
@@ -124,27 +117,27 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 			{
 				INTRIN_PACK_LOOP
 				(
-					packSquareX[i] = _mm256_mul_ps(packX[i], packX[i]);
-					packSquareY[i] = _mm256_mul_ps(packY[i], packY[i]);
+					packSquareX[i] = MUL_VECTOR(packX[i], packX[i]);
+					packSquareY[i] = MUL_VECTOR(packY[i], packY[i]);
 				)
 
 				INTRIN_PACK_LOOP
 				(
-					packY[i] = _mm256_mul_ps(packX[i], packY[i]);
-					packY[i] = _mm256_add_ps(packY[i], packY[i]);
-					packY[i] = _mm256_add_ps(packY[i], Y0);
+					packY[i] = MUL_VECTOR(packX[i], packY[i]);
+					packY[i] = ADD_VECTOR(packY[i], packY[i]);
+					packY[i] = ADD_VECTOR(packY[i], Y0);
 				)
 
 				INTRIN_PACK_LOOP
 				(
-					packX[i] = _mm256_sub_ps(packSquareX[i], packSquareY[i]);
-					packX[i] = _mm256_add_ps(packX[i], packX0[i]);
+					packX[i] = SUB_VECTOR(packSquareX[i], packSquareY[i]);
+					packX[i] = ADD_VECTOR(packX[i], packX0[i]);
 				)
 
 				INTRIN_PACK_LOOP
 				(
-					__m256 cmp = _mm256_cmp_ps(MAX_RADIUS_SQUARE_VECTOR, _mm256_add_ps(packSquareX[i], packSquareY[i]), _CMP_GT_OS);
-					masks[i]   = _mm256_movemask_ps(cmp);
+					MM cmp   = CMP_VECTOR(MAX_RADIUS_SQUARE_VECTOR, ADD_VECTOR(packSquareX[i], packSquareY[i]), _CMP_GT_OS);
+					masks[i] = MOVE_MASK(cmp);
 				)
 
 				if(!sumMasks(masks))
@@ -153,9 +146,9 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 				INTRIN_PACK_LOOP
 				(
 					int mask = masks[PACK_SIZE - 1 - i];
-					for(int j = 0; j < 8; j++)
+					for(int j = 0; j < AVX_VECTOR_SIZE; j++)
 					{
-						nBuf[i * 8 + j] += mask & ~(-1 << 1);
+						nBuf[i * AVX_VECTOR_SIZE + j] += mask & ~(-1 << 1);
 						mask >>= 1;
 					}
 				)
@@ -163,7 +156,7 @@ void fillMandelbrotSetIntrinConveer(MANDELBROT_SET* mdSet)
 
 			for(int i = 0; i < AVX_VECTOR_SIZE * PACK_SIZE; i++)
 			{
-				int n = nBuf[PACK_SIZE * AVX_VECTOR_SIZE - 1 - i];
+				int n = nBuf[PACK_SIZE * AVX_VECTOR_SIZE - 1 - i] - 1;
 				mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = mdSet->colorTable[n];
 			}
 		}
@@ -176,7 +169,7 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 
 	for(int curY = 0; curY < mdSet->matrixSize.y; curY++)
 	{
-		__m256 Y0 = _mm256_set_ps(DUP8(curY));
+		MM Y0 = SET_VECTOR_DUP(curY);
 		Y0 = ((Y0 - mdSet->matrixSize.y / 2) * mdSet->scale + mdSet->centerPosition.y * (1 - mdSet->scale));
 
 		//TODO: add working with size !%8
@@ -185,25 +178,25 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 			for(int i = 0; i < 8; i++)
 				nBuf[i] = 0;
 
-			__m256 X0 = (_mm256_set_ps(SEQ8(curX)));
+			MM X0 = SET_VECTOR_SEQ(curX);
 			X0 = ((X0 - mdSet->matrixSize.x / 2) * mdSet->scale + mdSet->centerPosition.x * (1 - mdSet->scale));
 
-			__m256 x_V = X0;
-			__m256 y_V = Y0;
+			MM x_V = X0;
+			MM y_V = Y0;
 
 			for(int n = 0; n < mdSet->maxCalculationsCnt; n++)
 			{
-				__m256 x2_V = _mm256_mul_ps(x_V, x_V);
-				__m256 y2_V = _mm256_mul_ps(y_V, y_V);
+				MM x2_V = MUL_VECTOR(x_V, x_V);
+				MM y2_V = MUL_VECTOR(y_V, y_V);
 
-				__m256 TMP_X = x_V;
-				x_V = _mm256_add_ps(_mm256_sub_ps(x2_V, y2_V), X0);
+				MM TMP_X = x_V;
+				x_V = ADD_VECTOR(SUB_VECTOR(x2_V, y2_V), X0);
 
-				y_V = _mm256_mul_ps(TMP_X, y_V);
-				y_V = _mm256_add_ps(_mm256_add_ps(y_V, y_V), Y0);
+				y_V = MUL_VECTOR(TMP_X, y_V);
+				y_V = ADD_VECTOR(ADD_VECTOR(y_V, y_V), Y0);
 
-				__m256 cmp_V = _mm256_cmp_ps(MAX_RADIUS_SQUARE_VECTOR, _mm256_add_ps(x2_V, y2_V), _CMP_GT_OS);
-				int mask = _mm256_movemask_ps(cmp_V);
+				MM cmp_V = CMP_VECTOR(MAX_RADIUS_SQUARE_VECTOR, ADD_VECTOR(x2_V, y2_V), _CMP_GT_OS);
+				int mask = MOVE_MASK(cmp_V);
 
 				if(!mask) break;
 
@@ -213,7 +206,7 @@ void fillMandelbrotSetIntrin(MANDELBROT_SET* mdSet)
 
 			for(int i = 0; i < 8; i++)
 			{
-				int n = nBuf[7-i];
+				int n = nBuf[7-i] - 1;
 
 				mdSet->matrix[curY * mdSet->matrixSize.y + curX + i].color = mdSet->colorTable[n];
 			}
@@ -248,7 +241,7 @@ void fillMandelbrotSetNoOpt(MANDELBROT_SET* mdSet)
 					break;
 			}
 
-			mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = mdSet->colorTable[n];
+			mdSet->matrix[curY * mdSet->matrixSize.y + curX].color = mdSet->colorTable[n - 1];
 		}
 	}
 }

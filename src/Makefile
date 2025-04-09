@@ -17,7 +17,6 @@ TARGET  := ../mandelbrot
 all: $(TARGET)
 
 $(TARGET): $(ODIR)main.o $(addprefix $(ODIR), $(OBJ))
-
 	$(GCC) $^ -o $@ -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 $(ODIR)main.o: main.cpp
@@ -29,8 +28,9 @@ $(ODIR)%.o: %.cpp $(INCLUDE)%.hpp
 run:
 	$(TARGET)
 
+CNT := 6
 test:
-	$(TARGET) --test 3
+	$(TARGET) --test $(CNT)
 
 clean:
 	rm $(ODIR)*.o

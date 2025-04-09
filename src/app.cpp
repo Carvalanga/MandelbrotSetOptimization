@@ -6,14 +6,13 @@
 const int screenSizeX = 800;
 const int screenSizeY = 800;
 
-const float   DX     = 0.1;
-const float   DY     = 0.1;
-const float   DSCALE   = 0.5;
+const double   DX     = 0.1;
+const double   DY     = 0.1;
+const double   DSCALE   = 0.5;
 
 const int nMax = 256;
 
 static int isMove = 0;
-
 static int   funcSwitchNumber = 0;
 static const mdFillFunc FUNTIONS[] =
 {
@@ -27,11 +26,13 @@ void checkInput(PROGRAMM_DATA* data)
     sf::Event event;
     while (data->window.pollEvent(event))
     {
-        if (event.type == sf::Event::Closed || event.key.code == sf::Keyboard::Escape)
+        if (event.type == sf::Event::Closed)
             data->window.close();
 
         if(event.type == sf::Event::KeyPressed)
         {
+            if(event.key.code == sf::Keyboard::Escape) data->window.close();
+
             if(event.key.code == sf::Keyboard::Left)  data->mdSet.centerPosition.x -= DX * data->mdSet.scale * 100;
             if(event.key.code == sf::Keyboard::Right) data->mdSet.centerPosition.x += DX * data->mdSet.scale * 100;
             if(event.key.code == sf::Keyboard::Up)    data->mdSet.centerPosition.y -= DY * data->mdSet.scale * 100;
@@ -50,13 +51,26 @@ void checkInput(PROGRAMM_DATA* data)
         if(event.type == sf::Event::MouseButtonPressed)
         {
             if(event.mouseButton.button == sf::Mouse::Left)
+            {
+                data->mouseClickPos = sf::Mouse::getPosition(data->window);
                 isMove = 1;
+            }
         }
 
         if(event.type == sf::Event::MouseButtonReleased)
         {
             if(event.mouseButton.button == sf::Mouse::Left)
                 isMove = 0;
+        }
+
+        if(event.type == sf::Event::MouseMoved && isMove)
+        {
+            // printf("x0 = %d, y0 = %d\n", data->mouseClickPos.x, data->mouseClickPos.y);
+            sf::Vector2i diff(event.mouseMove.x, event.mouseMove.y);
+            diff -= data->mouseClickPos;
+            data->mdSet.centerPosition -= sf::Vector2f(diff) * data->mdSet.scale;
+            data->mouseClickPos = sf::Mouse::getPosition(data->window);
+            // printf("x = %d, y = %d\n", event.mouseMove.x, event.mouseMove.y);
         }
     }
 }
