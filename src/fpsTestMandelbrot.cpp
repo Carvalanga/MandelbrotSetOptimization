@@ -23,7 +23,6 @@ void testMandelbrotSet(MANDELBROT_SET* mdSet, MANDELBOT_TEST* test)
 	{
 		case START:
 		{
-			//TODO: add off of scalebable
 			mdSet->centerPosition = {LEFT_TEST_POS, 0};
 			test->type = LEFT_RIGHT;
 			mdSet->scale = LOW_SCALE;

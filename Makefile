@@ -7,30 +7,33 @@ CFLAGS := -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-eq
 	      -Wformat=2 -Wignored-qualifiers -Wlogical-op -Wno-missing-field-initializers -Wnon-virtual-dtor\
 	      -Woverloaded-virtual -Wpointer-arith -Wsign-promo -Wstack-usage=8192 -Wstrict-aliasing -Wstrict-null-sentinel\
 	      -Wtype-limits -Wwrite-strings -Werror=vla -D_DEB
-INCLUDE := ../include/
+INCLUDE := include/
 MAIN 	:= main
-ODIR    := ../objects/
+SRC 	:= src/
+ODIR    := objects/
 NAMES   := app mandelbrotSet commandLineHandler testOptimization
 OBJ     := $(patsubst %, %.o, $(NAMES))
-TARGET  := ../mandelbrot
+TARGET  := mandelbrot
 
 all: $(TARGET)
 
 $(TARGET): $(ODIR)main.o $(addprefix $(ODIR), $(OBJ))
 	$(GCC) $^ -o $@ -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
-$(ODIR)main.o: main.cpp
-	$(GCC) -c $(addsuffix .cpp, $(MAIN)) -I $(INCLUDE) -o $(patsubst %, $(ODIR)%.o, $(MAIN))
+$(ODIR)main.o: src/main.cpp
+	$(GCC) -c src/main.cpp -I $(INCLUDE) -o $(ODIR)main.o
 
-$(ODIR)%.o: %.cpp $(INCLUDE)%.hpp
+$(ODIR)%.o: $(SRC)%.cpp $(INCLUDE)%.hpp
 	$(GCC) -O2 -mavx2 -c -I $(INCLUDE) $< -o $@
 
 run:
-	$(TARGET)
+	./$(TARGET)
 
-CNT := 6
 test:
-	$(TARGET) --test $(CNT)
+	$(TARGET) --test 10
+
+info:
+	echo $(addprefix $(ODIR), $(OBJ))
 
 clean:
 	rm $(ODIR)*.o

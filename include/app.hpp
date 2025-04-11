@@ -9,9 +9,8 @@ struct PROGRAMM_DATA
 	sf::RenderWindow& window;
 	sf::Clock& 		  fpsClock;
 	MANDELBROT_SET    mdSet;
-	sf::Vector2i 	  mouseClickPos;
 };
 
-int runApp();
+void runApp();
 
 #endif
