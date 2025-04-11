@@ -13,18 +13,6 @@ static const int   MAX_RADIUS 				= 5 * 5;
 
 static const MM MAX_RADIUS_SQUARE_VECTOR = SET_VECTOR_DUP(MAX_RADIUS);
 
-void printVector(__m256 vector)
-{
-    float buf[8] = {};
-    _mm256_store_ps(buf, vector);
-
-    for(int i = 0; i < 8; i++)
-    {
-        printf("%lg ", buf[i]);
-    }
-    printf("\n");
-}
-
 void fillColorTable(sf::Color* colorTable, int nCnt)
 {
 	for(int n = 0; n < nCnt - 1; n++)

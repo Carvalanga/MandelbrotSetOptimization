@@ -9,7 +9,18 @@
 #define GET_SECONDS(ts2, ts1) (double)((ts2.tv_sec - ts1.tv_sec) + (ts2.tv_nsec - ts1.tv_nsec) / 1e9)
 #define GET_MILLISECONDS(ts2, ts1) (double)(((ts2.tv_sec - ts1.tv_sec) + (ts2.tv_nsec - ts1.tv_nsec) / 1e9) * 1e3)
 
-static const double TEST_SCALE = 625e-6;
+static int iterations = 0;
+static const int 	NUM_OF_TESTS = 3;
+static const double TEST_SCALE   = 625e-6;
+static const double LABEL_FIRST_LINE = 0.7;
+static const double LABEL_OFFSET 	 = 0.1;
+
+static const char* FILE_NAMES[NUM_OF_TESTS] =
+{
+	"noOpt.txt",
+	"intrinOpt.txt",
+	"conveerOpt.txt"
+};
 
 static const char* GNU_COMMANDS[] =
 {
@@ -18,52 +29,74 @@ static const char* GNU_COMMANDS[] =
 	"set yrange [0:*]\n",
 	"set xrange [0:*]\n"
 	"set key outside\n",
-	"plot \"noOpt.txt\" with lines, \"intrinOpt.txt\" with lines, \"conveerOpt.txt\" with lines\n"
+	"plot \"noOpt.txt\" with lines, \"intrinOpt.txt\" with lines, \"conveerOpt.txt\" with lines \n"
 };
 
-static double calcError(TEST_UNIT* tests, double middleTime, int loopCnt)
+static const mdFillFunc TEST_FUNTIONS[] =
+{
+	fillMandelbrotSetNoOpt,
+	fillMandelbrotSetIntrin,
+	fillMandelbrotSetIntrinConveer
+};
+
+static double calcError(double* tests, double middleTime, int loopCnt)
 {
 	double errorSum = 0;
 
-	printf("middle = %lg\n", middleTime);
 	for(int i = 0; i < loopCnt; i++)
-		errorSum += pow(tests[i].elapsedTime - middleTime, 2);
-
-	printf("errorSum = %lg\n", errorSum);
+		errorSum += pow(tests[i] - middleTime, 2);
 
 	double err = sqrt(errorSum) / loopCnt;
 
-	printf("err = %lg\n", err);
 	return err;
 }
 
-static TEST_RESULT testFunc(MANDELBROT_SET* mdSet, TEST_UNIT* tests, mdFillFunc func, FILE* dumpFile, int loopCnt)
+static TEST_RESULT testFunc(MANDELBROT_SET* mdSet, double* tests, mdFillFunc func, FILE* dumpFile, int loopCnt)
 {
-
 	struct timespec globalStart = {},
 					localStart  = {},
 					end         = {};
 
 	clock_gettime(CLOCK_MONOTONIC, &globalStart);
-
 	for(int i = 0; i < loopCnt; i++)
 	{
 		clock_gettime(CLOCK_MONOTONIC, &localStart);
 		func(mdSet);
 		clock_gettime(CLOCK_MONOTONIC, &end);
 
-		tests[i].elapsedTime = GET_MILLISECONDS(end, localStart);
-		tests[i].globalTime  = GET_SECONDS(end, globalStart);
+		tests[i] = GET_MILLISECONDS(end, localStart);
+
+		printf("%.2lf%%\r", ((float)iterations++ / (loopCnt * NUM_OF_TESTS)) * 100);
+		fflush(stdout);
 	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
+
+	double sumTime = GET_SECONDS(end, globalStart);
 
 	for(int i = 0; i < loopCnt; i++)
-		fprintf(dumpFile, "%lg %lg\n", tests[i].globalTime, tests[i].elapsedTime);
+		fprintf(dumpFile, "%d %lg\n", i, tests[i]);
 
 	TEST_RESULT result = {};
-	result.middleTimeForFilling = (tests[loopCnt - 1].globalTime / loopCnt) * 1e3;
+	result.middleTimeForFilling = (sumTime / loopCnt) * 1e3;
 	result.error 				= calcError(tests, result.middleTimeForFilling, loopCnt);
 
 	return result;
+}
+
+void callGnuplot(TEST_RESULT results[NUM_OF_TESTS])
+{
+	FILE* gnuplotPipe = popen("gnuplot", "w");
+
+	fprintf(gnuplotPipe, "set rmargin at screen 0.6\n");
+
+	for(int i = 0; i < NUM_OF_TESTS; i++)
+		fprintf(gnuplotPipe, "set label \"%s: (%.2lf ± %.2lf) ms\" at screen 0.98, %.1lg right\n",
+				FILE_NAMES[i], results[i].middleTimeForFilling, results[i].error, LABEL_FIRST_LINE - LABEL_OFFSET * i);
+
+	for(int i = 0; i < sizeof(GNU_COMMANDS) / sizeof(GNU_COMMANDS[0]); i++)
+		fputs(GNU_COMMANDS[i], gnuplotPipe);
+
+	pclose(gnuplotPipe);
 }
 
 void testOptimisation(int loopCnt)
@@ -71,32 +104,24 @@ void testOptimisation(int loopCnt)
 	MANDELBROT_SET mdSet = mandelbrotSetCtor(DEFAULT_SIZE_X, DEFAULT_SIZE_Y);
 	mdSet.scale = TEST_SCALE;
 
-	TEST_UNIT* tests = (TEST_UNIT*)calloc(loopCnt, sizeof(TEST_UNIT));
+	double* tests = (double*)calloc(loopCnt, sizeof(double));
 
-	FILE* testNoOpt  = fopen("noOpt.txt",     "w");
-	FILE* intrinOpt  = fopen("intrinOpt.txt", "w");
-	FILE* conveerOpt = fopen("conveerOpt.txt","w");
+	FILE* testFiles[NUM_OF_TESTS] = {};
 
-	TEST_RESULT res1 = testFunc(&mdSet, tests, fillMandelbrotSetNoOpt, testNoOpt, loopCnt);
-	testFunc(&mdSet, tests, fillMandelbrotSetIntrin, intrinOpt, loopCnt);
-	testFunc(&mdSet, tests, fillMandelbrotSetIntrinConveer, conveerOpt, loopCnt);
-	// printf("middle time = (%lg +- %lg) millseconds (%lg%%)\n", res1.middleTimeForFilling, res1.error, res1.error / res1.middleTimeForFilling * 100);
+	for(int i = 0; i < NUM_OF_TESTS; i++)
+		testFiles[i] = fopen(FILE_NAMES[i], "w");
 
-	// TEST_RESULT res2 = testFunc(fillMandelbrotSetIntrinConveer, testNoOpt, loopCnt);
-	// printf("middle time = (%lg +- %lg) millseconds (%lg%%)\n", res2.middleTimeForFilling, res2.error, res2.error / res2.middleTimeForFilling * 100);
+	TEST_RESULT results[NUM_OF_TESTS] = {};
 
-	fclose(testNoOpt);
-	fclose(intrinOpt);
-	fclose(conveerOpt);
-
-	FILE* gnuplotPipe = popen("gnuplot", "w");
-
-	for(int i = 0; i < sizeof(GNU_COMMANDS) / sizeof(GNU_COMMANDS[0]); i++)
-		fputs(GNU_COMMANDS[i], gnuplotPipe);
+	for(int i = 0; i < NUM_OF_TESTS; i ++)
+		results[i] = testFunc(&mdSet, tests, TEST_FUNTIONS[i], testFiles[i], loopCnt);
 
 	free(tests);
-	pclose(gnuplotPipe);
 
+	for(int i = 0; i < NUM_OF_TESTS; i++)
+		fclose(testFiles[i]);
+
+	callGnuplot(results);
 }
 
 #undef GET_SECONDS

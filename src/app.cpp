@@ -14,7 +14,7 @@ const int nMax = 256;
 
 static int isMove = 0;
 static int   funcSwitchNumber = 0;
-static const mdFillFunc FUNTIONS[] =
+static const mdFillFunc TEST_FUNTIONS[] =
 {
 	fillMandelbrotSetNoOpt,
 	fillMandelbrotSetIntrin,
@@ -39,7 +39,7 @@ void checkInput(PROGRAMM_DATA* data)
             if(event.key.code == sf::Keyboard::Down)  data->mdSet.centerPosition.y += DY * data->mdSet.scale * 100;
             if(event.key.code == sf::Keyboard::Z)     data->mdSet.scale  *= DSCALE;
             if(event.key.code == sf::Keyboard::X)     data->mdSet.scale  /= DSCALE;
-            if(event.key.code == sf::Keyboard::Enter) data->mdSet.fillFunc = FUNTIONS[(funcSwitchNumber++) % (sizeof(FUNTIONS) / sizeof(FUNTIONS[0]))];
+            if(event.key.code == sf::Keyboard::Enter) data->mdSet.fillFunc = TEST_FUNTIONS[(funcSwitchNumber++) % (sizeof(TEST_FUNTIONS) / sizeof(TEST_FUNTIONS[0]))];
         }
 
         if(event.type == sf::Event::MouseWheelScrolled)

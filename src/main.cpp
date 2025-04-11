@@ -2,7 +2,6 @@
 #include "commandLineHandler.hpp"
 #include "testOptimization.hpp"
 
-
 int main(int argc, char* argv[])
 {
 	PROGRAMM_STATUS status = handleCommandArgs(argc, argv);
