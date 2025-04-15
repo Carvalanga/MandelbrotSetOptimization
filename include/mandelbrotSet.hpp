@@ -39,8 +39,8 @@
 
 #endif
 
-const int DEFAULT_SIZE_X = 800;
-const int DEFAULT_SIZE_Y = 800;
+const int DEFAULT_SIZE_X = 1920;
+const int DEFAULT_SIZE_Y = 1072;
 
 enum MANDELBROT_STATUS
 {

@@ -1,4 +1,5 @@
 .PHONY: all, clean
+MODE    := double
 
 GCC    := g++
 CFLAGS := -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Winline -Wunreachable-code\
@@ -15,6 +16,12 @@ NAMES   := app mandelbrotSet commandLineHandler testOptimization
 OBJ     := $(patsubst %, %.o, $(NAMES))
 TARGET  := mandelbrot
 
+ifeq ($(MODE), double)
+DBLFLAG := -D DOUBLE
+else
+DBLFLAG :=
+endif
+
 all: $(TARGET)
 
 $(TARGET): $(ODIR)main.o $(addprefix $(ODIR), $(OBJ))
@@ -24,16 +31,17 @@ $(ODIR)main.o: src/main.cpp
 	$(GCC) -c src/main.cpp -I $(INCLUDE) -o $(ODIR)main.o
 
 $(ODIR)%.o: $(SRC)%.cpp $(INCLUDE)%.hpp
-	$(GCC) -O2 -mavx2 -c -I $(INCLUDE) $< -o $@
+	$(GCC) -O2 -mavx2 -c -I $(INCLUDE) $< -o $@ $(DBLFLAG)
 
 run:
 	./$(TARGET)
 
-test:
-	$(TARGET) --test 10
-
-info:
-	echo $(addprefix $(ODIR), $(OBJ))
-
-clean:
+cleanObj:
 	rm $(ODIR)*.o
+
+cleanData:
+	rm intrinOpt.txt
+	rm noOpt.txt
+	rm graph.png
+	rm conveerOpt.txt
+
