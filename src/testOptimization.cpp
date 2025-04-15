@@ -10,8 +10,9 @@
 #define GET_MILLISECONDS(ts2, ts1) (double)(((ts2.tv_sec - ts1.tv_sec) + (ts2.tv_nsec - ts1.tv_nsec) / 1e9) * 1e3)
 
 static int iterations = 0;
-static const int 	NUM_OF_TESTS = 3;
-static const double TEST_SCALE   = 625e-6;
+
+static const int 	NUM_OF_TESTS     = 3;
+static const double TEST_SCALE       = 625e-6;
 static const double LABEL_FIRST_LINE = 0.7;
 static const double LABEL_OFFSET 	 = 0.1;
 
@@ -87,7 +88,7 @@ void callGnuplot(TEST_RESULT results[NUM_OF_TESTS])
 {
 	FILE* gnuplotPipe = popen("gnuplot", "w");
 
-	fprintf(gnuplotPipe, "set rmargin at screen 0.6\n");
+	fprintf(gnuplotPipe, "set rmargin at screen 0.5\n");
 
 	for(int i = 0; i < NUM_OF_TESTS; i++)
 		fprintf(gnuplotPipe, "set label \"%s: (%.2lf ± %.2lf) ms\" at screen 0.98, %.1lg right\n",

@@ -1,5 +1,6 @@
 .PHONY: all, clean
-MODE    := double
+MODE         :=
+OPTIMIZATION := -O2
 
 GCC    := g++
 CFLAGS := -Wshadow -Winit-self -Wredundant-decls -Wcast-align -Wundef -Wfloat-equal -Winline -Wunreachable-code\
@@ -31,7 +32,7 @@ $(ODIR)main.o: src/main.cpp
 	$(GCC) -c src/main.cpp -I $(INCLUDE) -o $(ODIR)main.o
 
 $(ODIR)%.o: $(SRC)%.cpp $(INCLUDE)%.hpp
-	$(GCC) -O2 -mavx2 -c -I $(INCLUDE) $< -o $@ $(DBLFLAG)
+	$(GCC) $(OPTIMIZATION) -mavx2 -c -I $(INCLUDE) $< -o $@ $(DBLFLAG)
 
 run:
 	./$(TARGET)

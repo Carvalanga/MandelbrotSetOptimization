@@ -4,9 +4,6 @@
 
 #include "mandelbrotSet.hpp"
 
-#define PACK_SIZE 2
-#define INTRIN_PACK_LOOP(text) for(int i = 0; i < PACK_SIZE; i++) { text }
-
 static const float DEFAULT_SCALE 			= 0.005;
 static const int   DEFAULT_CALCULATIONS_CNT = 256;
 static const int   MAX_RADIUS 				= 5 * 5;
